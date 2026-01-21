@@ -2,16 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VinuStorage Pro | Master Vault</title>
     <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10/dist/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-deep: #0b0d14;
-            --bg-card: rgba(28, 30, 41, 0.98);
-            --bg-input: #11131b;
+            --bg-card: rgba(20, 22, 31, 0.9);
+            --bg-input: #151720;
             --accent-purple: #7f56d9;
             --accent-stake: #00e071;
             --text-main: #ffffff;
@@ -19,277 +21,906 @@
             --border-ui: #2d303e;
             --btn-gradient: linear-gradient(135deg, #6941c6 0%, #7f56d9 100%);
             --radius-lg: 24px;
-            --radius-md: 14px;
-            --ease: cubic-bezier(0.4, 0, 0.2, 1);
+            --radius-md: 16px;
+            --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+            --status-good: #00e071;
+            --status-fair: #f59e0b;
+            --status-poor: #ef4444;
         }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #38404a; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--accent-purple); }
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
         body {
             background-color: var(--bg-deep); color: var(--text-main); font-family: 'Inter', sans-serif;
             display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh;
             margin: 0; padding: 20px; overflow-x: hidden; position: relative;
         }
 
-        #icon-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
-        .floating-icon { position: absolute; background-image: url('icon.png'); background-size: contain; background-repeat: no-repeat; filter: grayscale(0.5) opacity(0.15); will-change: transform; }
+        #icon-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; overflow: hidden; }
+        .floating-icon {
+            position: absolute;
+            background-image: url('icon.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            opacity: 0.06;
+            will-change: transform;
+        }
 
         .vault-card {
-            width: 100%; max-width: 440px; background: var(--bg-card); border-radius: var(--radius-lg);
-            padding: 35px; border: 1px solid var(--border-ui); box-shadow: 0 30px 100px rgba(0,0,0,0.6);
-            backdrop-filter: blur(20px); z-index: 10; overflow: hidden;
+            width: 100%; max-width: 440px;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 30px;
+            border: 1px solid var(--border-ui);
+            box-shadow: 0 40px 100px -20px rgba(0,0,0,0.8);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            z-index: 10;
+            position: relative;
+            transition: max-width 0.5s var(--ease), height 0.4s var(--ease), padding 0.5s var(--ease);
         }
 
-        .brand-header {
-            display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 30px;
+        @media (min-width: 860px) {
+            .vault-card { max-width: 960px; padding: 50px; }
+            #send-grid-layout, #recv-grid-layout {
+                display: grid; grid-template-columns: 1fr 1.2fr; gap: 40px; align-items: stretch;
+            }
+            .desktop-left-col { height: 100%; min-height: 400px; display: flex; flex-direction: column; }
+            .drop-zone, .recv-radar { flex: 1; display: flex; flex-direction: column; justify-content: center; margin-bottom: 0 !important; }
         }
-        .brand-logo { height: 42px; width: auto; filter: drop-shadow(0 0 10px rgba(127, 86, 217, 0.3)); }
+
+        .brand-header { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 30px; }
+        .brand-logo { height: 42px; width: auto; filter: drop-shadow(0 0 15px rgba(127, 86, 217, 0.4)); transition: transform 0.5s var(--ease); }
+        .brand-header:hover .brand-logo { transform: rotate(10deg) scale(1.1); }
         .brand-title { height: 72px; width: auto; }
 
         .nav-tabs {
             display: flex; background: var(--bg-input); border-radius: var(--radius-md); padding: 5px;
-            margin-bottom: 25px; border: 1px solid var(--border-ui);
+            margin-bottom: 30px; border: 1px solid var(--border-ui); position: relative;
+            max-width: 440px; margin-left: auto; margin-right: auto;
         }
         .nav-item {
-            flex: 1; padding: 12px; text-align: center; cursor: pointer; border-radius: 10px;
-            font-size: 13px; font-weight: 700; color: var(--text-dim); transition: all 0.3s var(--ease);
+            flex: 1; padding: 12px; text-align: center; cursor: pointer; border-radius: 12px;
+            font-size: 13px; font-weight: 700; color: var(--text-dim); transition: all 0.3s var(--ease); z-index: 2;
         }
-        .nav-item.active { color: var(--text-main); background: #1c1e29; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .nav-item.active { color: var(--text-main); text-shadow: 0 0 10px rgba(255,255,255,0.3); }
+        .nav-slider {
+            position: absolute; top: 5px; left: 5px; width: calc(50% - 5px); height: calc(100% - 10px);
+            background: #232633; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            transition: transform 0.4s var(--ease); z-index: 1; border: 1px solid rgba(255,255,255,0.08);
+        }
 
-        .views-container { position: relative; width: 100%; display: flex; align-items: flex-start; transition: transform 0.5s var(--ease); }
+        .views-container { position: relative; width: 100%; transition: height 0.4s var(--ease); overflow: visible; }
         .view-content {
-            min-width: 100%; opacity: 0; transition: opacity 0.4s var(--ease), transform 0.5s var(--ease);
-            transform: scale(0.95);
+            position: absolute; top: 0; left: 0; width: 100%;
+            opacity: 0; transform: translateY(10px) scale(0.98);
+            transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
+            pointer-events: none; visibility: hidden;
         }
-        .view-content.active { opacity: 1; transform: scale(1); }
+        .view-content.active { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; visibility: visible; transition-delay: 0.05s; }
 
-        label { display: block; font-size: 11px; font-weight: 800; color: var(--text-dim); margin: 0 0 8px 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+        label { display: block; font-size: 11px; font-weight: 700; color: var(--text-dim); margin: 0 0 10px 5px; text-transform: uppercase; letter-spacing: 0.8px; }
 
-        .input-wrapper { position: relative; margin-bottom: 20px; width: 100%; }
-        .input-wrapper input {
-            width: 100%; padding: 16px; padding-right: 50px;
+        .input-wrapper { position: relative; margin-bottom: 24px; width: 100%; }
+        .input-wrapper input, .input-wrapper select {
+            width: 100%; padding: 18px; padding-right: 50px;
             background: var(--bg-input); border: 1px solid var(--border-ui); border-radius: var(--radius-md);
-            color: #fff; outline: none; transition: 0.3s var(--ease); font-size: 14px;
-            word-break: break-all;
+            color: #fff; outline: none; transition: all 0.3s var(--ease); font-size: 14px; font-family: 'Fira Code', monospace;
         }
-        .input-wrapper input:focus { border-color: var(--accent-purple); box-shadow: 0 0 0 4px rgba(127, 86, 217, 0.15); }
+        .input-wrapper input:focus { border-color: var(--accent-purple); box-shadow: 0 0 0 4px rgba(127, 86, 217, 0.15), 0 0 20px rgba(127, 86, 217, 0.1); background: #1a1d29; }
 
-        .icon-btn { position: absolute; right: 14px; top: 12px; background: none; border: none; cursor: pointer; padding: 8px; border-radius: 8px; }
-        .icon-btn svg { fill: var(--accent-purple); width: 18px; height: 18px; }
+        .collapsible { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.4s var(--ease), opacity 0.3s var(--ease); opacity: 0; }
+        .collapsible.open { grid-template-rows: 1fr; opacity: 1; }
+        .collapsible > div { overflow: hidden; }
 
-        .drop-zone {
-            border: 2px dashed var(--border-ui); border-radius: var(--radius-md); padding: 30px;
-            text-align: center; margin-bottom: 20px; cursor: pointer; background: var(--bg-input);
-            transition: all 0.3s var(--ease); position: relative;
+        .icon-btn { position: absolute; right: 14px; top: 14px; background: none; border: none; cursor: pointer; padding: 8px; border-radius: 8px; transition: transform 0.2s, background 0.2s; }
+        .icon-btn:hover { background: rgba(255,255,255,0.1); }
+        .icon-btn:active { transform: scale(0.9); }
+        .icon-btn svg { fill: var(--accent-purple); width: 20px; height: 20px; }
+
+        .drop-zone, .recv-radar {
+            border: 2px dashed var(--border-ui); border-radius: var(--radius-md); padding: 40px;
+            text-align: center; margin-bottom: 24px; cursor: pointer; background: rgba(0,0,0,0.2);
+            transition: all 0.3s var(--ease); position: relative; overflow: hidden;
         }
-        .drop-zone:hover { border-color: var(--accent-purple); background: rgba(127, 86, 217, 0.02); }
-        .file-count {
-            color: var(--accent-stake); font-weight: 800; font-size: 12px; margin-top: 10px;
-            text-shadow: 0 0 10px rgba(0, 224, 113, 0.3); animation: pulse 2s infinite;
+        .drop-zone:hover, .recv-radar:hover { border-color: var(--accent-purple); background: rgba(127, 86, 217, 0.05); transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .drop-zone.drag-active { border-color: var(--accent-stake); background: rgba(0, 224, 113, 0.08); transform: scale(1.01); box-shadow: 0 0 40px rgba(0, 224, 113, 0.15); z-index: 20; }
+        .drop-zone.drop-success { animation: suckIn 0.4s var(--ease); border-color: var(--accent-stake); }
+        @keyframes suckIn { 0% { transform: scale(1.02); } 50% { transform: scale(0.95); } 100% { transform: scale(1); } }
+        .drop-zone::after { content: ''; position: absolute; bottom: 0; left: 0; height: 4px; width: 0%; background: var(--btn-gradient); transition: width 0.2s linear; box-shadow: 0 0 15px var(--accent-purple); }
+        .drop-zone.uploading::after { width: var(--progress, 0%); }
+
+        .radar-scan { width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--border-ui); margin: 0 auto 15px; position: relative; }
+        .radar-scan::before {
+            content:''; position: absolute; top:50%; left:50%; transform:translate(-50%, -50%);
+            width: 100%; height: 100%; border-radius: 50%; border: 1px solid var(--accent-purple); opacity: 0;
+            animation: pulse-ring 2s infinite;
         }
+        @keyframes pulse-ring { 0% { width:60%; height:60%; opacity:0; } 50% { opacity: 0.5; } 100% { width: 140%; height: 140%; opacity: 0; } }
+
+        .file-count { color: var(--accent-stake); font-weight: 700; font-family: 'Fira Code'; font-size: 12px; margin-top: 15px; }
 
         .btn-primary {
-            width: 100%; padding: 18px; border: none; border-radius: var(--radius-md);
-            background: var(--btn-gradient); color: #fff; font-size: 15px; font-weight: 700;
-            cursor: pointer; transition: all 0.3s var(--ease);
+            width: 100%; padding: 20px; border: none; border-radius: var(--radius-md);
+            background: var(--btn-gradient); color: #fff; font-size: 15px; font-weight: 700; letter-spacing: 0.5px;
+            cursor: pointer; transition: all 0.3s var(--ease); box-shadow: 0 10px 30px -10px rgba(127, 86, 217, 0.5);
         }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 15px 35px -10px rgba(127, 86, 217, 0.6); }
         .btn-primary:active { transform: scale(0.98); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; filter: grayscale(1); }
 
         .pay-overlay {
-            background: #000; border-radius: var(--radius-md); padding: 25px; text-align: center;
-            border: 1px solid var(--accent-purple); width: 100%;
+            background: #050608; border-radius: var(--radius-md); padding: 30px; text-align: center;
+            border: 1px solid var(--accent-purple); width: 100%; animation: popIn 0.3s var(--ease);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
         }
-        #qrcode { background: #fff; padding: 12px; border-radius: 12px; display: inline-block; margin-bottom: 15px; }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        #qrcode { background: #fff; padding: 15px; border-radius: 16px; display: inline-block; margin-bottom: 20px; }
 
         .addr-display {
-            font-family: 'Fira Code'; font-size: 11px; color: var(--text-dim);
-            background: #0d0d0d; padding: 14px; border-radius: 10px;
-            margin-top: 15px; border: 1px solid #222; cursor: pointer;
-            word-break: break-all; white-space: normal; overflow-wrap: break-word;
+            font-family: 'Fira Code'; font-size: 12px; color: var(--text-dim); background: #0d0d0d;
+            padding: 16px; border-radius: 12px; margin-top: 15px; border: 1px solid #222;
+            cursor: pointer; word-break: break-all; transition: 0.2s;
         }
+        .addr-display:hover { border-color: var(--accent-purple); color: #fff; background: #151515; }
 
+        /* --- 控制台打字机样式 --- */
         .console {
-            margin-top: 25px; background: rgba(0,0,0,0.9); border-radius: var(--radius-md);
-            padding: 15px; font-family: 'Fira Code', monospace; font-size: 11px; color: var(--accent-stake);
-            height: 140px; overflow-y: auto; overflow-x: hidden; border: 1px solid var(--border-ui);
+            margin-top: 25px; background: rgba(0,0,0,0.6); border-radius: var(--radius-md);
+            padding: 20px; font-family: 'Fira Code', monospace; font-size: 11px; color: var(--accent-stake);
+            height: 120px; overflow-y: auto; overflow-x: hidden; border: 1px solid var(--border-ui);
             line-height: 1.6; word-break: break-all; white-space: pre-wrap;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
         }
 
-        .footer-copyright { margin-top: 30px; font-size: 11px; color: rgba(255,255,255,0.2); letter-spacing: 1px; }
+        .log-line { margin-bottom: 2px; }
+
+        /* 光标闪烁动画 */
+        .typing-cursor::after {
+            content: '▋';
+            display: inline-block;
+            animation: blink 1s step-start infinite;
+            color: var(--accent-stake);
+            margin-left: 4px;
+            vertical-align: text-bottom;
+            font-size: 12px;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .footer-copyright { margin-top: 40px; font-size: 11px; color: rgba(255,255,255,0.15); letter-spacing: 1px; font-weight: 600; }
         .hidden { display: none !important; }
 
-        .typing::after { content: '▊'; animation: blink 1s infinite; margin-left: 2px; }
-        @keyframes blink { 50% { opacity: 0; } }
+        .options-group { background: rgba(255,255,255,0.02); border: 1px solid var(--border-ui); border-radius: var(--radius-md); padding: 20px; margin-bottom: 24px; }
+        .checkbox-wrapper { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; cursor: pointer; }
+        .checkbox-wrapper input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent-purple); cursor: pointer; }
+        .checkbox-label { font-size: 13px; font-weight: 600; color: var(--text-dim); }
+        .mode-switch { display: flex; gap: 10px; margin-bottom: 20px; background: #0f1118; padding: 4px; border-radius: 14px; border: 1px solid #2d303e; }
+        .mode-opt { flex: 1; padding: 10px; text-align: center; border: 1px solid transparent; border-radius: 10px; font-size: 11px; font-weight: 700; color: var(--text-dim); cursor: pointer; transition: 0.3s; }
+        .mode-opt:hover { color: #fff; }
+        .mode-opt.selected { background: #232633; color: #fff; border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+
+        .net-monitor {
+            position: fixed; bottom: 25px; right: 25px; background: rgba(11, 13, 20, 0.8);
+            border: 1px solid var(--border-ui); border-radius: 30px; padding: 8px 16px;
+            font-family: 'Fira Code', monospace; font-size: 11px; color: var(--text-dim);
+            cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.3s var(--ease);
+            z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+            user-select: none;
+        }
+        .net-monitor:hover { border-color: var(--accent-purple); color: #fff; transform: translateY(-2px); }
+        .net-monitor.disabled { opacity: 0.5; pointer-events: none; filter: grayscale(1); }
+        .ping-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--status-fair); box-shadow: 0 0 8px currentColor; transition: background 0.5s, box-shadow 0.5s; }
+        .ping-dot.good { background: var(--status-good); color: var(--status-good); }
+        .ping-dot.fair { background: var(--status-fair); color: var(--status-fair); }
+        .ping-dot.poor { background: var(--status-poor); color: var(--status-poor); }
+        .net-name { font-weight: 700; letter-spacing: 0.5px; }
+        .net-stat { opacity: 0.6; font-size: 10px; }
+
+        @media (max-width: 600px) {
+            .net-monitor { bottom: 15px; right: 15px; padding: 6px 12px; }
+            .vault-card { padding: 20px; }
+            .brand-title { height: 60px; }
+        }
     </style>
 </head>
 <body>
 
 <div id="icon-bg"></div>
 
-<div class="vault-card">
+<div class="net-monitor" id="net-widget" onclick="toggleNetwork()">
+    <div class="ping-dot" id="ping-dot"></div>
+    <div class="net-info">
+        <span class="net-name" id="net-name">MAINNET</span>
+        <span class="net-stat" id="net-stat">Connecting...</span>
+    </div>
+</div>
+
+<div class="vault-card" id="main-card">
     <div class="brand-header">
         <img src="icon.png" alt="Logo" class="brand-logo">
         <img src="title.png" alt="VinuStorage" class="brand-title">
     </div>
 
     <div class="nav-tabs" id="ui-tabs">
+        <div class="nav-slider" id="nav-slider"></div>
         <div class="nav-item active" id="tab-send" onclick="switchView('send')">SEND</div>
         <div class="nav-item" id="tab-recv" onclick="switchView('recv')">RECEIVE</div>
     </div>
 
     <div class="views-container" id="views-wrapper">
         <div id="view-send" class="view-content active">
-            <div id="send-form">
-                <label>1. Archive Files</label>
-                <div class="drop-zone" onclick="document.getElementById('file-input').click()">
-                    <i style="font-size:36px; display:block; margin-bottom:12px; font-style:normal;">📂</i>
-                    <p style="margin:0; font-size:13px;">Upload Files</p>
-                    <div id="file-status" class="file-count" style="margin-top:8px;"></div>
-                    <input type="file" id="file-input" multiple class="hidden">
+            <div id="send-grid-layout">
+                <div class="desktop-left-col">
+                    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                        <i style="font-size:42px; display:block; margin-bottom:15px; font-style:normal; color:var(--text-dim);">[+]</i>
+                        <p style="margin:0; font-size:14px; font-weight:600;" id="drop-text">Drag & Drop Files</p>
+                        <div id="file-status" class="file-count"></div>
+                        <input type="file" id="file-input" multiple class="hidden">
+                    </div>
                 </div>
-                <label>2. Recipient Wallet</label>
-                <div class="input-wrapper">
-                    <input type="text" id="target-addr" placeholder="0x..." autocomplete="off">
-                    <button class="icon-btn" onclick="pasteAddr('target-addr')"><svg viewBox="0 0 24 24"><path d="M19,2H14.82C14.4,0.84 13.3,0 12,0C10.7,0 9.6,0.84 9.18,2H5C3.9,2 3,2.9 3,4V20C3,21.1 3.9,22 5,22H19C20.1,22 21,21.1 21,20V4C21,2.9 20.1,2 19,2M12,2A1,1 0 0,1 13,3A1,1 0 0,1 12,4A1,1 0 0,1 11,3A1,1 0 0,1 12,2M19,20H5V4H7V7H17V4H19V20Z"/></svg></button>
+
+                <div id="send-controls-wrapper">
+                    <label>Mode & Security</label>
+                    <div class="options-group">
+                        <div class="mode-switch">
+                            <div class="mode-opt selected" id="opt-burner" onclick="setMode('burner')">BURNER WALLET</div>
+                            <div class="mode-opt" id="opt-custom" onclick="setMode('custom')">CUSTOM KEY</div>
+                        </div>
+
+                        <div class="collapsible" id="pk-input-wrap">
+                            <div class="input-wrapper">
+                                <input type="password" id="custom-pk" placeholder="Private Key (0x...)" autocomplete="off">
+                            </div>
+                        </div>
+
+                        <div class="checkbox-wrapper" onclick="toggleEncrypt()">
+                            <input type="checkbox" id="chk-encrypt">
+                            <span class="checkbox-label">AES-GCM ENCRYPTION</span>
+                        </div>
+
+                        <div class="collapsible" id="pass-input-wrap">
+                            <div class="input-wrapper" style="margin-bottom: 0;">
+                                <input type="password" id="encrypt-pass" placeholder="Encryption Password" autocomplete="off">
+                            </div>
+                        </div>
+                    </div>
+
+                    <label>Recipient Address</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="target-addr" placeholder="0x..." autocomplete="off">
+                        <button class="icon-btn" onclick="pasteAddr('target-addr')"><svg viewBox="0 0 24 24"><path d="M19,2H14.82C14.4,0.84 13.3,0 12,0C10.7,0 9.6,0.84 9.18,2H5C3.9,2 3,2.9 3,4V20C3,21.1 3.9,22 5,22H19C20.1,22 21,21.1 21,20V4C21,2.9 20.1,2 19,2M12,2A1,1 0 0,1 13,3A1,1 0 0,1 12,4A1,1 0 0,1 11,3A1,1 0 0,1 12,2M19,20H5V4H7V7H17V4H19V20Z"/></svg></button>
+                    </div>
+
+                    <button class="btn-primary" id="btn-up">INITIALIZE VAULT</button>
                 </div>
-                <button class="btn-primary" id="btn-up">Initialize Random Vault</button>
             </div>
 
             <div id="pay-box" class="pay-overlay hidden">
                 <div id="qrcode"></div>
-                <div class="amount-tag" id="pay-amount">0.0000 VC</div>
-                <div style="font-size: 11px; color: var(--accent-purple); font-weight: 700; margin-bottom: 5px;">Awaiting Fuel Deposit</div>
+                <div class="amount-tag" id="pay-amount" style="font-family:'Fira Code'; font-size:18px; font-weight:700; margin-bottom:5px;">0.0000 VC</div>
+                <div style="font-size: 11px; color: var(--accent-purple); font-weight: 700; margin-bottom: 5px;">AWAITING FUEL DEPOSIT</div>
                 <div id="temp-addr" class="addr-display" onclick="copyToClipboard(this)"></div>
-                <button class="btn-primary" style="background:transparent; border:1px solid #333; margin-top:20px; color:var(--text-dim); padding:10px;" onclick="cancelTransaction()">Cancel & Refund</button>
+                <button class="btn-primary" style="background:transparent; border:1px solid #333; margin-top:20px; color:var(--text-dim); padding:10px;" onclick="cancelTransaction()">CANCEL & REFUND</button>
             </div>
         </div>
 
         <div id="view-recv" class="view-content">
-            <label>Index Transaction Hash</label>
-            <div class="input-wrapper">
-                <input type="text" id="idx-hash" placeholder="0x...">
-                <button class="icon-btn" onclick="pasteAddr('idx-hash')"><svg viewBox="0 0 24 24"><path d="M19,2H14.82C14.4,0.84 13.3,0 12,0C10.7,0 9.6,0.84 9.18,2H5C3.9,2 3,2.9 3,4V20C3,21.1 3.9,22 5,22H19C20.1,22 21,21.1 21,20V4C21,2.9 20.1,2 19,2M12,2A1,1 0 0,1 13,3A1,1 0 0,1 12,4A1,1 0 0,1 11,3A1,1 0 0,1 12,2M19,20H5V4H7V7H17V4H19V20Z"/></svg></button>
+            <div id="recv-grid-layout">
+                <div class="desktop-left-col">
+                    <div class="recv-radar">
+                        <div class="radar-scan"></div>
+                        <p style="margin:0; font-size:14px; font-weight:600; color:var(--text-dim);">DATA RETRIEVAL</p>
+                    </div>
+                </div>
+
+                <div>
+                    <label>Index Transaction Hash</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="idx-hash" placeholder="0x...">
+                        <button class="icon-btn" onclick="pasteAddr('idx-hash')"><svg viewBox="0 0 24 24"><path d="M19,2H14.82C14.4,0.84 13.3,0 12,0C10.7,0 9.6,0.84 9.18,2H5C3.9,2 3,2.9 3,4V20C3,21.1 3.9,22 5,22H19C20.1,22 21,21.1 21,20V4C21,2.9 20.1,2 19,2M12,2A1,1 0 0,1 13,3A1,1 0 0,1 12,4A1,1 0 0,1 11,3A1,1 0 0,1 12,2M19,20H5V4H7V7H17V4H19V20Z"/></svg></button>
+                    </div>
+
+                    <label>Decryption Password (Optional)</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="decrypt-pass" placeholder="Enter if file is encrypted">
+                    </div>
+
+                    <button class="btn-primary" id="btn-dl" style="background: var(--bg-input); border: 1px solid var(--border-ui);">DECRYPT & RECOVER</button>
+                </div>
             </div>
-            <button class="btn-primary" id="btn-dl" style="background: var(--bg-input); border: 1px solid var(--border-ui);">Decrypt & Recover</button>
         </div>
     </div>
 
     <div class="console" id="log-console"></div>
 </div>
 
-<div class="footer-copyright">© All rights reserved. VinuStorage</div>
+<div class="footer-copyright">© 2024 VinuStorage Protocol. All rights reserved.</div>
 
 <script>
-    const RPC = 'https://testnet-rpc.vinuchain.org';
-    const provider = new ethers.providers.JsonRpcProvider(RPC);
-    let selectedFiles = [], isWaitingForPayment = false, currentWallet = null, currentDest = null;
+    const NETWORKS = {
+        mainnet: { name: "MAINNET", rpcs: ['https://rpc.vinuchain.org'] },
+        testnet: { name: "TESTNET", rpcs: ['https://testnet-rpc.vinuchain.org', 'https://vinufoundation-rpc.com'] }
+    };
+
+    let currentNetwork = 'mainnet';
+    let activeProviders = [];
+    let mainProvider = null;
+    let isNetworkReady = false;
+    let latencyInterval = null;
+    let isProcessing = false;
+
+    let selectedFiles = [];
+    let isWaitingForPayment = false;
+    let currentWallet = null;
+    let currentDest = null;
+    let uploadMode = 'burner';
 
     const consoleEl = document.getElementById('log-console');
+    const BURNER_STORAGE_KEY = 'vinu_burner_key';
+
+    // --- TYPEWRITER ENGINE ---
+    let typeQueue = [];
     let isTyping = false;
-    const typeQueue = [];
 
-    async function print(text, err = false) {
-        typeQueue.push({ text: `> ${text}\n`, err });
-        if (!isTyping) processQueue();
+    function print(text, err = false) {
+        return new Promise((resolve) => {
+            typeQueue.push({ text, err, resolve });
+            if (!isTyping) processTypeQueue();
+        });
     }
 
-    async function processQueue() {
-        if (typeQueue.length === 0) { isTyping = false; return; }
-        isTyping = true;
-        const { text, err } = typeQueue.shift();
-        const span = document.createElement('span');
-        if (err) span.style.color = '#ff4757';
-        consoleEl.appendChild(span);
-
-        for (let char of text) {
-            span.textContent += char;
-            consoleEl.scrollTop = consoleEl.scrollHeight;
-            await new Promise(r => setTimeout(r, 15));
+    async function processTypeQueue() {
+        if (typeQueue.length === 0) {
+            isTyping = false;
+            return;
         }
-        processQueue();
+        isTyping = true;
+        const { text, err, resolve } = typeQueue.shift();
+
+        const line = document.createElement('div');
+        line.className = 'log-line typing-cursor'; // Add blinking cursor
+        if (err) line.style.color = '#ef4444';
+        consoleEl.appendChild(line);
+
+        const fullText = `> ${text}`;
+
+        // Dynamic speed boost if queue piles up
+        const baseDelay = typeQueue.length > 2 ? 3 : 15;
+
+        for (let i = 0; i < fullText.length; i++) {
+            line.textContent += fullText[i];
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+            if (baseDelay > 0) await new Promise(r => setTimeout(r, baseDelay));
+        }
+
+        line.classList.remove('typing-cursor'); // Remove cursor when done
+        resolve();
+        processTypeQueue();
     }
 
-    print("Master Vault Secure. Ready for injection.");
+    function saveBurnerKey(pk) { localStorage.setItem(BURNER_STORAGE_KEY, pk); }
+    function loadBurnerKey() { return localStorage.getItem(BURNER_STORAGE_KEY); }
+    function clearBurnerKey() { localStorage.removeItem(BURNER_STORAGE_KEY); }
+
+    async function checkNetworkStatus() {
+        if(latencyInterval) clearInterval(latencyInterval);
+        const netConfig = NETWORKS[currentNetwork];
+        print(`Connecting to ${netConfig.name}...`);
+
+        document.getElementById('net-name').innerText = netConfig.name;
+        document.getElementById('net-stat').innerText = "Checking...";
+        document.getElementById('ping-dot').className = "ping-dot fair";
+
+        const checks = netConfig.rpcs.map(async (url) => {
+            try {
+                const p = new ethers.providers.JsonRpcProvider(url);
+                const start = Date.now();
+                await Promise.race([
+                    p.getBlockNumber(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 5000))
+                ]);
+                const lat = Date.now() - start;
+                return { provider: p, latency: lat };
+            } catch (e) { return null; }
+        });
+
+        const results = await Promise.all(checks);
+        const valid = results.filter(r => r !== null);
+        valid.sort((a, b) => a.latency - b.latency);
+        activeProviders = valid.map(r => r.provider);
+
+        if (activeProviders.length === 0) {
+            print("[!] CRITICAL: All nodes offline.", true);
+            isNetworkReady = false;
+            document.getElementById('ping-dot').className = "ping-dot poor";
+            document.getElementById('net-stat').innerText = "OFFLINE";
+        } else {
+            mainProvider = activeProviders[0];
+            isNetworkReady = true;
+            const avgLat = Math.round(valid.reduce((acc, curr) => acc + curr.latency, 0) / valid.length);
+            updatePingDisplay(avgLat);
+            print(`[OK] Network Active. ${activeProviders.length} Nodes. Best: ${valid[0].latency}ms`);
+            latencyInterval = setInterval(updateLatencyLoop, 8000);
+            checkRestorableSession();
+        }
+    }
+
+    async function updateLatencyLoop() {
+        if (!mainProvider || isProcessing) return;
+        try {
+            const start = Date.now();
+            await mainProvider.getBlockNumber();
+            updatePingDisplay(Date.now() - start);
+        } catch(e) {}
+    }
+
+    function updatePingDisplay(ms) {
+        const dot = document.getElementById('ping-dot');
+        document.getElementById('net-stat').innerText = `${ms}ms`;
+        if (ms < 200) dot.className = "ping-dot good";
+        else if (ms < 500) dot.className = "ping-dot fair";
+        else dot.className = "ping-dot poor";
+    }
+
+    function toggleNetwork() {
+        if (isProcessing) return;
+        currentNetwork = currentNetwork === 'testnet' ? 'mainnet' : 'testnet';
+        checkNetworkStatus();
+    }
+
+    function setProcessingState(state) {
+        isProcessing = state;
+        const widget = document.getElementById('net-widget');
+        const btnUp = document.getElementById('btn-up');
+        const btnDl = document.getElementById('btn-dl');
+        if (state) {
+            widget.classList.add('disabled');
+            document.getElementById('ui-tabs').style.pointerEvents = 'none';
+            document.getElementById('ui-tabs').style.opacity = '0.5';
+            btnUp.disabled = true; btnDl.disabled = true;
+        } else {
+            widget.classList.remove('disabled');
+            document.getElementById('ui-tabs').style.pointerEvents = 'auto';
+            document.getElementById('ui-tabs').style.opacity = '1';
+            btnUp.disabled = false; btnDl.disabled = false;
+        }
+    }
+
+    async function checkRestorableSession() {
+        const savedKey = loadBurnerKey();
+        if (savedKey) {
+            try {
+                const w = new ethers.Wallet(savedKey, mainProvider);
+                const bal = await w.getBalance();
+                if (bal.gt(ethers.utils.parseEther("0.001"))) {
+                    print(`[INFO] Found active session: ${w.address.slice(0,8)}...`);
+                } else { clearBurnerKey(); }
+            } catch(e) { clearBurnerKey(); }
+        }
+    }
+
+    checkNetworkStatus();
+    print("VinuStorage Pro v2.0 running...");
+
+    async function sha256(buffer) {
+        const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+        return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    async function getKey(password, salt) {
+        const enc = new TextEncoder();
+        const k = await crypto.subtle.importKey("raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]);
+        return crypto.subtle.deriveKey({ name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" }, k, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+    }
+    async function encryptData(dataBuffer, password) {
+        const salt = crypto.getRandomValues(new Uint8Array(16));
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const key = await getKey(password, salt);
+        const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, dataBuffer);
+        const res = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
+        res.set(salt, 0); res.set(iv, salt.length); res.set(new Uint8Array(encrypted), salt.length + iv.length);
+        return res;
+    }
+    async function decryptData(packedBuffer, password) {
+        const salt = packedBuffer.slice(0, 16);
+        const iv = packedBuffer.slice(16, 28);
+        const data = packedBuffer.slice(28);
+        const key = await getKey(password, salt);
+        try {
+            const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, data);
+            return new Uint8Array(decrypted);
+        } catch(e) { throw new Error("Decryption failed. Check password."); }
+    }
+
+    async function runConcurrent(tasks, concurrency) {
+        let active = 0; let index = 0; let results = []; let stop = false;
+        return new Promise((resolve, reject) => {
+            const next = () => {
+                if (stop) return;
+                if (index >= tasks.length) { if (active === 0) resolve(results); return; }
+                while (active < concurrency && index < tasks.length) {
+                    const i = index++; const task = tasks[i]; active++;
+                    task().then(res => { results[i] = res; active--; next(); }).catch(err => { stop = true; reject(err); });
+                }
+            };
+            next();
+        });
+    }
+
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => {
+        dropZone.addEventListener(e, ev => { ev.preventDefault(); ev.stopPropagation(); });
+    });
+    ['dragenter', 'dragover'].forEach(e => dropZone.addEventListener(e, () => {
+        if(!isProcessing) { dropZone.classList.add('drag-active'); document.getElementById('drop-text').innerText = "Release to Load"; }
+    }));
+    ['dragleave', 'drop'].forEach(e => dropZone.addEventListener(e, () => {
+        dropZone.classList.remove('drag-active');
+        if (e.type === 'dragleave') document.getElementById('drop-text').innerText = "Drag & Drop Files";
+    }));
+    dropZone.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
+    fileInput.addEventListener('change', function() { handleFiles(this.files); });
+
+    function handleFiles(files) {
+        if (!files.length || isProcessing) return;
+        selectedFiles = Array.from(files);
+        document.getElementById('file-status').innerText = `${selectedFiles.length} FILE(S) READY`;
+        dropZone.querySelector('i').innerText = '[READY]';
+        document.getElementById('drop-text').innerText = "Files Loaded";
+        print(`Loaded ${selectedFiles.length} files.`);
+    }
+
+    const viewsWrapper = document.getElementById('views-wrapper');
+    const viewSend = document.getElementById('view-send');
+    const viewRecv = document.getElementById('view-recv');
+    const resizeObserver = new ResizeObserver(() => updateWrapperHeight());
+    resizeObserver.observe(viewSend); resizeObserver.observe(viewRecv);
+    window.addEventListener('load', () => updateWrapperHeight('view-send'));
+
+    function updateWrapperHeight(targetId) {
+        const targetView = targetId ? document.getElementById(targetId) : document.querySelector('.view-content.active');
+        if (targetView) viewsWrapper.style.height = (targetView.scrollHeight < 150 ? 150 : targetView.scrollHeight) + 'px';
+    }
 
     function switchView(m) {
-        const wrapper = document.getElementById('views-wrapper');
-        const vSend = document.getElementById('view-send');
-        const vRecv = document.getElementById('view-recv');
-        const tSend = document.getElementById('tab-send');
-        const tRecv = document.getElementById('tab-recv');
-
+        if(isProcessing) return;
+        const vSend = document.getElementById('view-send'); const vRecv = document.getElementById('view-recv'); const slider = document.getElementById('nav-slider');
+        vSend.classList.remove('active', 'prev-active'); vRecv.classList.remove('active', 'prev-active');
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         if(m === 'send') {
-            wrapper.style.transform = 'translateX(0%)';
-            vSend.classList.add('active');
-            vRecv.classList.remove('active');
-            tSend.classList.add('active');
-            tRecv.classList.remove('active');
+            vSend.classList.add('active'); vRecv.classList.add('prev-active');
+            document.getElementById('tab-send').classList.add('active'); slider.style.transform = 'translateX(0%)';
+            updateWrapperHeight('view-send');
         } else {
-            wrapper.style.transform = 'translateX(-100%)';
-            vRecv.classList.add('active');
-            vSend.classList.remove('active');
-            tRecv.classList.add('active');
-            tSend.classList.remove('active');
+            vRecv.classList.add('active'); vSend.classList.add('prev-active');
+            document.getElementById('tab-recv').classList.add('active'); slider.style.transform = 'translateX(100%)';
+            updateWrapperHeight('view-recv');
         }
+    }
+
+    function setMode(mode) {
+        if(isProcessing) return;
+        uploadMode = mode;
+        const btnB = document.getElementById('opt-burner'); const btnC = document.getElementById('opt-custom'); const pkWrap = document.getElementById('pk-input-wrap');
+        if(mode === 'burner') { btnB.classList.add('selected'); btnC.classList.remove('selected'); pkWrap.classList.remove('open'); }
+        else { btnC.classList.add('selected'); btnB.classList.remove('selected'); pkWrap.classList.add('open'); }
+        setTimeout(() => updateWrapperHeight(), 350);
+    }
+
+    function toggleEncrypt() {
+        if(isProcessing) return;
+        const chk = document.getElementById('chk-encrypt'); const passWrap = document.getElementById('pass-input-wrap');
+        if(!event.target.matches('input')) chk.checked = !chk.checked;
+        if(chk.checked) passWrap.classList.add('open'); else passWrap.classList.remove('open');
+        setTimeout(() => updateWrapperHeight(), 350);
     }
 
     async function performSweep(wallet, dest) {
         if (!wallet || !dest) return;
         try {
-            const balance = await provider.getBalance(wallet.address);
-            const gasPrice = await provider.getGasPrice();
-            const fee = gasPrice.mul(21000);
-            if (balance.gt(fee)) {
-                const amount = balance.sub(fee);
-                await print(`Auto-Sweep: Refunding ${ethers.utils.formatEther(amount)} VC...`);
-                const tx = await wallet.sendTransaction({ to: dest, value: amount, gasLimit: 21000, gasPrice: gasPrice });
+            print(">>> Initiating Emergency Refund...");
+            const balance = await mainProvider.getBalance(wallet.address);
+            const feeData = await mainProvider.getFeeData();
+            const gasPrice = feeData.gasPrice;
+            const gasLimit = 21000;
+            const txCost = gasPrice.mul(gasLimit);
+            const safetyMargin = txCost.mul(120).div(100);
+            if (balance.gt(txCost.add(safetyMargin))) {
+                const amountToSend = balance.sub(txCost).sub(safetyMargin);
+                print(`Refunding ${ethers.utils.formatEther(amountToSend)} VC...`);
+                const sweepWallet = new ethers.Wallet(wallet.privateKey, mainProvider);
+                const tx = await sweepWallet.sendTransaction({ to: dest, value: amountToSend, gasLimit: gasLimit, gasPrice: gasPrice });
                 await tx.wait();
-                await print("Funds safely returned.");
-            }
-        } catch (e) { console.error(e); }
+                print(`[REFUNDED] TX: ${tx.hash.slice(0,10)}...`);
+                clearBurnerKey();
+            } else { print("Balance too low for refund."); clearBurnerKey(); }
+        } catch (e) { console.error(e); print("[!] Refund failed.", true); }
     }
 
     async function cancelTransaction() {
         isWaitingForPayment = false;
-        await print("Transaction Interrupted. Checking funds...", true);
-        if (currentWallet && currentDest) await performSweep(currentWallet, currentDest);
-        resetUI();
+        print("[ABORT] Stopped by user.", true);
+        if (currentWallet && currentDest && uploadMode === 'burner') await performSweep(currentWallet, currentDest);
+        setProcessingState(false); resetUI();
     }
 
     function resetUI() {
         document.getElementById('pay-box').classList.add('hidden');
         document.getElementById('send-form').classList.remove('hidden');
-        const nav = document.getElementById('ui-tabs');
-        nav.style.opacity = '1';
-        nav.style.pointerEvents = 'auto';
         document.getElementById('qrcode').innerHTML = "";
+        const dz = document.getElementById('drop-zone');
+        dz.classList.remove('uploading'); dz.style.setProperty('--progress', '0%');
+        dz.querySelector('i').innerText = '[+]';
+        document.getElementById('drop-text').innerText = 'Drag & Drop Files';
     }
 
     async function copyToClipboard(el) {
-        const text = el.innerText;
-        await navigator.clipboard.writeText(text);
-        const oldText = el.innerText;
-        el.innerText = "COPIED!";
-        setTimeout(() => el.innerText = oldText, 1200);
+        await navigator.clipboard.writeText(el.innerText);
+        const old = el.innerText; el.innerText = "COPIED"; setTimeout(() => el.innerText = old, 1200);
     }
 
     async function pasteAddr(id) {
-        const text = await navigator.clipboard.readText();
-        document.getElementById(id).value = text;
+        if(isProcessing) return;
+        document.getElementById(id).value = await navigator.clipboard.readText();
     }
+
+    document.getElementById('btn-up').onclick = async () => {
+        if (!isNetworkReady) return alert("Network offline.");
+        const dest = document.getElementById('target-addr').value.trim();
+        const isEncrypt = document.getElementById('chk-encrypt').checked;
+        const pass = document.getElementById('encrypt-pass').value.trim();
+        const customPK = document.getElementById('custom-pk').value.trim();
+
+        if(!selectedFiles.length) return alert("No files.");
+        if(!ethers.utils.isAddress(dest)) return alert("Invalid Address.");
+        if(isEncrypt && !pass) return alert("Password required.");
+        if(uploadMode === 'custom' && !customPK) return alert("Key required.");
+
+        currentDest = dest;
+        setProcessingState(true);
+        document.getElementById('send-form').classList.add('hidden');
+        document.getElementById('pay-box').classList.remove('hidden');
+
+        try {
+            print("Processing data...");
+            const zip = new JSZip();
+            selectedFiles.forEach(f => zip.file(f.name, f));
+            let finalData = await zip.generateAsync({type:"uint8array"});
+            let fileHash = await sha256(finalData);
+
+            if(isEncrypt) {
+                print("Encrypting...");
+                finalData = await encryptData(finalData, pass);
+                fileHash = "ENC_GCM_" + fileHash;
+            }
+
+            const chunks = [];
+            const CHUNK_SIZE = 120 * 1024;
+            for(let i=0; i<finalData.length; i+=CHUNK_SIZE) chunks.push(finalData.slice(i, i+CHUNK_SIZE));
+
+            const MAX_HASHES = 1500;
+            const isMultipart = chunks.length > MAX_HASHES;
+
+            if(uploadMode === 'custom') {
+                try {
+                    currentWallet = new ethers.Wallet(customPK, mainProvider);
+                    print(`Auth: ${currentWallet.address.slice(0,8)}...`);
+                } catch(e) { throw new Error("Invalid Key"); }
+            } else {
+                currentWallet = ethers.Wallet.createRandom().connect(mainProvider);
+                saveBurnerKey(currentWallet.privateKey);
+
+                const feeData = await mainProvider.getFeeData();
+                const safeGasPrice = feeData.gasPrice.mul(120).div(100);
+                const chunkGas = ethers.BigNumber.from(2300000);
+                let indexCost = 300000;
+                if(isMultipart) indexCost += (Math.ceil(chunks.length / MAX_HASHES) * 300000);
+                const totalWei = chunkGas.mul(chunks.length).add(indexCost).mul(safeGasPrice).mul(130).div(100);
+                const roundedEther = (Math.ceil(parseFloat(ethers.utils.formatEther(totalWei)) * 10000) / 10000).toFixed(4);
+
+                document.getElementById('temp-addr').innerText = currentWallet.address;
+                document.getElementById('pay-amount').innerText = `${roundedEther} VC`;
+                new QRCode(document.getElementById('qrcode'), { text: currentWallet.address, width: 140, height: 140 });
+
+                print(`Waiting for fuel...`);
+                isWaitingForPayment = true;
+                while(isWaitingForPayment) {
+                    const bal = await mainProvider.getBalance(currentWallet.address);
+                    if(bal.gte(totalWei)) break;
+                    await new Promise(r => setTimeout(r, 4000));
+                }
+                if(!isWaitingForPayment) return;
+                document.getElementById('pay-box').classList.add('hidden');
+                document.getElementById('send-form').classList.remove('hidden');
+            }
+
+            const dropZone = document.getElementById('drop-zone');
+            dropZone.classList.add('uploading');
+            document.getElementById('drop-text').innerText = "TRANSMITTING...";
+
+            const concurrency = Math.max(activeProviders.length * 6, 6);
+            print(`Concurrent Level: ${concurrency}`);
+
+            let currentNonce = await currentWallet.getTransactionCount();
+            const chunkHashes = new Array(chunks.length);
+
+            const tasks = chunks.map((chunk, index) => async () => {
+                const freshFee = await mainProvider.getFeeData();
+                const head = new Uint8Array(4);
+                new DataView(head.buffer).setUint32(0, index+1, false);
+                const payload = ethers.utils.hexlify(ethers.utils.concat([head, chunk]));
+
+                const tx = await currentWallet.sendTransaction({
+                    to: currentWallet.address, data: payload, nonce: currentNonce + index,
+                    gasLimit: 2300000, gasPrice: freshFee.gasPrice
+                });
+
+                chunkHashes[index] = tx.hash;
+                const percent = Math.floor(((index + 1) / chunks.length) * 100);
+                dropZone.style.setProperty('--progress', `${percent}%`);
+                document.getElementById('drop-text').innerText = `UPLOADING ${percent}%`;
+                if (index % 5 === 0) print(`Chunk ${index+1} sent`);
+            });
+
+            await runConcurrent(tasks, concurrency);
+            currentNonce += chunks.length;
+
+            let finalPayload = "";
+            let modeTag = "V5_DIRECT";
+            const freshFeeIdx = await mainProvider.getFeeData();
+
+            if (isMultipart) {
+                print("Multipart Indexing...");
+                modeTag = "V5_MULTIPART";
+                const pageHashes = [];
+                for (let i = 0; i < chunkHashes.length; i += MAX_HASHES) {
+                    const page = chunkHashes.slice(i, i + MAX_HASHES);
+                    const pageStr = JSON.stringify(page);
+                    const pageTx = await currentWallet.sendTransaction({
+                        to: currentWallet.address,
+                        data: ethers.utils.hexlify(ethers.utils.toUtf8Bytes(pageStr)),
+                        nonce: currentNonce++,
+                        gasLimit: 500000,
+                        gasPrice: freshFeeIdx.gasPrice
+                    });
+                    await pageTx.wait();
+                    pageHashes.push(pageTx.hash);
+                    print(`Index Page secured.`);
+                }
+                finalPayload = JSON.stringify(pageHashes);
+            } else { finalPayload = JSON.stringify(chunkHashes); }
+
+            const idxStr = `V5::VinuStorage_File::${fileHash}::${modeTag}::${finalPayload}`;
+            print("Finalizing...");
+            const idxTx = await currentWallet.sendTransaction({
+                to: dest, data: ethers.utils.toUtf8Bytes(idxStr), nonce: currentNonce++,
+                gasLimit: 500000 + (finalPayload.length * 20), gasPrice: freshFeeIdx.gasPrice
+            });
+
+            dropZone.classList.remove('uploading');
+            dropZone.querySelector('i').innerText = '[OK]';
+            document.getElementById('drop-text').innerText = "UPLOAD COMPLETE";
+            print(`[SUCCESS] Index: ${idxTx.hash}`);
+            await idxTx.wait();
+
+            if (uploadMode === 'burner') await performSweep(currentWallet, currentDest);
+
+        } catch (e) {
+            print(`[FATAL] ${e.message}`, true);
+            if (uploadMode === 'burner' && currentWallet && currentDest) await performSweep(currentWallet, currentDest);
+        } finally {
+            setProcessingState(false);
+            setTimeout(resetUI, 5000);
+        }
+    };
+
+    document.getElementById('btn-dl').onclick = async () => {
+        if (!isNetworkReady) return alert("Network offline.");
+        const hash = document.getElementById('idx-hash').value.trim();
+        const pass = document.getElementById('decrypt-pass').value.trim();
+        const btn = document.getElementById('btn-dl');
+        if(!hash) return;
+        setProcessingState(true);
+        btn.innerText = "SEARCHING...";
+
+        try {
+            print("Reading Index...");
+            const tx = await mainProvider.getTransaction(hash);
+            const raw = ethers.utils.toUtf8String(tx.data);
+            if (!raw.startsWith("V5::")) throw new Error("Protocol Mismatch (V5 required).");
+
+            const parts = raw.split("::");
+            const fileHash = parts[2];
+            const mode = parts[3];
+            const payloadStr = parts.slice(4).join("::");
+            let chunkHashes = [];
+            const concurrency = Math.max(activeProviders.length * 6, 6);
+
+            if (mode === "V5_DIRECT") {
+                chunkHashes = JSON.parse(payloadStr);
+                print(`Direct Mode: ${chunkHashes.length} chunks.`);
+            } else if (mode === "V5_MULTIPART") {
+                print("Multipart Mode. Fetching Pages...");
+                const pageHashes = JSON.parse(payloadStr);
+                const pageTasks = pageHashes.map((pHash, idx) => async () => {
+                    const p = activeProviders[idx % activeProviders.length];
+                    const pTx = await p.getTransaction(pHash);
+                    return JSON.parse(ethers.utils.toUtf8String(pTx.data));
+                });
+                const pages = await runConcurrent(pageTasks, concurrency);
+                chunkHashes = pages.flat();
+                print(`Reassembled: ${chunkHashes.length} total chunks.`);
+            }
+
+            const chunksData = new Array(chunkHashes.length);
+            let completed = 0;
+            const dlTasks = chunkHashes.map((cHash, idx) => async () => {
+                const p = activeProviders[idx % activeProviders.length];
+                const t = await p.getTransaction(cHash);
+                chunksData[idx] = ethers.utils.arrayify(t.data).slice(4);
+                completed++;
+                const pct = Math.floor((completed / chunkHashes.length) * 100);
+                btn.innerText = `DOWNLOADING ${pct}%`;
+                if(completed % 20 === 0) print(`Downloaded ${completed}`);
+            });
+
+            await runConcurrent(dlTasks, concurrency);
+
+            let totalLen = 0;
+            chunksData.forEach(c => totalLen += c.length);
+            const combinedData = new Uint8Array(totalLen);
+            let offset = 0;
+            chunksData.forEach(c => { combinedData.set(c, offset); offset += c.length; });
+
+            const isGCM = fileHash && fileHash.startsWith("ENC_GCM_");
+            if(isGCM && !pass) throw new Error("Password required.");
+
+            let finalZipBytes = combinedData;
+            if(isGCM) {
+                btn.innerText = "DECRYPTING...";
+                print("Decrypting...");
+                finalZipBytes = await decryptData(combinedData, pass);
+            }
+
+            print("Verifying Integrity...");
+            const calculatedHash = await sha256(finalZipBytes);
+            const expectedHash = isGCM ? fileHash.replace("ENC_GCM_", "") : fileHash;
+
+            if(calculatedHash !== expectedHash) throw new Error("Integrity Check Failed!");
+            print("[OK] Integrity Verified.");
+
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(new Blob([finalZipBytes]));
+            link.download = `VinuRestore_${Date.now()}.zip`;
+            link.click();
+            print("Recovery Successful.");
+            btn.innerText = "DECRYPT & RECOVER";
+
+        } catch (e) {
+            print(`[ERROR] ${e.message}`, true);
+            btn.innerText = "DECRYPT & RECOVER";
+        } finally {
+            setProcessingState(false);
+        }
+    };
 
     (function(){
         const container = document.getElementById('icon-bg');
+        container.innerHTML = '';
         for (let i = 0; i < 20; i++) {
             const el = document.createElement('div');
             el.className = 'floating-icon';
             const size = Math.random() * 30 + 40;
+            const duration = Math.random() * 25 + 40;
+            const delay = Math.random() * -20;
             Object.assign(el.style, {
                 width: `${size}px`, height: `${size}px`,
                 left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%`,
-                animation: `float-anim ${Math.random() * 25 + 40}s linear infinite alternate`
+                animation: `float-anim ${duration}s linear infinite alternate ${delay}s`
             });
             container.appendChild(el);
         }
@@ -297,109 +928,6 @@
         style.innerHTML = `@keyframes float-anim { from { transform: translate(0,0) rotate(0deg); } to { transform: translate(80px, 80px) rotate(180deg); } }`;
         document.head.appendChild(style);
     })();
-
-    document.getElementById('file-input').onchange = (e) => {
-        selectedFiles = Array.from(e.target.files);
-        document.getElementById('file-status').innerText = `${selectedFiles.length} file(s) ready`;
-    };
-
-    document.getElementById('btn-up').onclick = async () => {
-        const dest = document.getElementById('target-addr').value.trim();
-        if(!selectedFiles.length || !ethers.utils.isAddress(dest)) return alert("Invalid Inputs");
-        currentDest = dest;
-        const nav = document.getElementById('ui-tabs');
-        nav.style.opacity = '0.3';
-        nav.style.pointerEvents = 'none';
-        document.getElementById('send-form').classList.add('hidden');
-
-        try {
-            const wallet = ethers.Wallet.createRandom().connect(provider);
-            currentWallet = wallet;
-            const zip = new JSZip();
-            selectedFiles.forEach(f => zip.file(f.name, f));
-            const zipBytes = await zip.generateAsync({type:"uint8array"});
-            const fileHash = ethers.utils.sha256(zipBytes).replace('0x','');
-            const chunks = [];
-            for(let i=0; i<zipBytes.length; i+=102400) chunks.push(zipBytes.slice(i, i+102400));
-
-            const gasPrice = await provider.getGasPrice();
-            const chunkGas = ethers.BigNumber.from(2300000);
-            const totalWei = chunkGas.mul(chunks.length).add(130000).mul(gasPrice).add(ethers.utils.parseEther("0.02"));
-            const roundedEther = (Math.ceil(parseFloat(ethers.utils.formatEther(totalWei)) * 10000) / 10000).toFixed(4);
-
-            document.getElementById('pay-box').classList.remove('hidden');
-            document.getElementById('temp-addr').innerText = wallet.address;
-            document.getElementById('pay-amount').innerText = `${roundedEther} VC`;
-            document.getElementById('qrcode').innerHTML = "";
-            new QRCode(document.getElementById('qrcode'), { text: wallet.address, width: 140, height: 140 });
-
-            await print(`Initiating Vault at ${wallet.address.slice(0,12)}...`);
-            await print(`Requirement: ${roundedEther} VC fuel.`);
-
-            isWaitingForPayment = true;
-            while(isWaitingForPayment) {
-                const bal = await provider.getBalance(wallet.address);
-                if(bal.gte(totalWei)) break;
-                await new Promise(r => setTimeout(r, 4000));
-            }
-            if(!isWaitingForPayment) return;
-
-            document.getElementById('pay-box').classList.add('hidden');
-            await print("Fuel confirmed. Starting data injection...");
-
-            let nonce = 0;
-            for(let i=0; i<chunks.length; i++) {
-                const head = new Uint8Array(4);
-                new DataView(head.buffer).setUint32(0, i+1, false);
-                await wallet.sendTransaction({
-                    to: wallet.address, data: ethers.utils.hexlify(ethers.utils.concat([head, chunks[i]])),
-                    nonce: nonce++, gasLimit: chunkGas, gasPrice: gasPrice
-                });
-                await print(`Shard ${i+1}/${chunks.length} injected.`);
-            }
-
-            const idxStr = `${wallet.address}::0-${chunks.length}::${dest}::${new Date().toISOString()}::${fileHash}`;
-            const idxTx = await wallet.sendTransaction({ to: dest, data: ethers.utils.toUtf8Bytes(idxStr), nonce: nonce++, gasLimit: 100000, gasPrice: gasPrice });
-            await print(`Master Hash: ${idxTx.hash}`);
-            await idxTx.wait();
-
-        } catch (e) { await print(`Error: ${e.message}`, true); }
-        finally {
-            if (currentWallet && currentDest) await performSweep(currentWallet, currentDest);
-            setTimeout(resetUI, 4000);
-        }
-    };
-
-    document.getElementById('btn-dl').onclick = async () => {
-        const hash = document.getElementById('idx-hash').value.trim();
-        if(!hash) return;
-        try {
-            await print("Accessing blockchain index...");
-            const tx = await provider.getTransaction(hash);
-            const raw = ethers.utils.toUtf8String(tx.data);
-            const [from, range] = raw.split('::');
-            const [s, e] = range.split('-').map(Number);
-
-            const api = `https://testnet.vinuexplorer.org/api/v2/addresses/${from}/transactions`;
-            const resp = await fetch(api).then(r=>r.json());
-            const txs = resp.items.filter(i => {
-                const n = parseInt(i.nonce);
-                return n >= s && n < e && i.from.hash.toLowerCase() === from.toLowerCase();
-            }).sort((a,b) => parseInt(a.nonce) - parseInt(b.nonce));
-
-            const pieces = [];
-            for(let i=0; i<txs.length; i++) {
-                const t = await provider.getTransaction(txs[i].hash);
-                pieces.push(ethers.utils.arrayify(t.data).slice(4));
-                await print(`Reconstructing Shard ${i+1}...`);
-            }
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(new Blob(pieces));
-            link.download = `VinuRestore_${Date.now()}.zip`;
-            link.click();
-            await print("Vault Reconstruction Complete.");
-        } catch (e) { await print(`Failed: ${e.message}`, true); }
-    };
 </script>
 </body>
 </html>
