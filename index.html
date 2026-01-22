@@ -505,7 +505,7 @@
     }
 
     checkNetworkStatus();
-    print("VinuStorage Pro v2.0 running...");
+    print("VinuStorage Pro v2.0.1 running...");
 
     async function sha256(buffer) {
         const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
@@ -651,7 +651,8 @@
 
     function resetUI() {
         document.getElementById('pay-box').classList.add('hidden');
-        document.getElementById('send-form').classList.remove('hidden');
+        // FIX: Replaced 'send-form' with 'send-grid-layout'
+        document.getElementById('send-grid-layout').classList.remove('hidden');
         document.getElementById('qrcode').innerHTML = "";
         const dz = document.getElementById('drop-zone');
         dz.classList.remove('uploading'); dz.style.setProperty('--progress', '0%');
@@ -683,7 +684,8 @@
 
         currentDest = dest;
         setProcessingState(true);
-        document.getElementById('send-form').classList.add('hidden');
+        // FIX: Replaced 'send-form' with 'send-grid-layout'
+        document.getElementById('send-grid-layout').classList.add('hidden');
         document.getElementById('pay-box').classList.remove('hidden');
 
         try {
@@ -736,7 +738,8 @@
                 }
                 if(!isWaitingForPayment) return;
                 document.getElementById('pay-box').classList.add('hidden');
-                document.getElementById('send-form').classList.remove('hidden');
+                // FIX: Replaced 'send-form' with 'send-grid-layout'
+                document.getElementById('send-grid-layout').classList.remove('hidden');
             }
 
             const dropZone = document.getElementById('drop-zone');
