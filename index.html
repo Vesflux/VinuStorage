@@ -75,7 +75,23 @@
         }
 
         .brand-header { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 30px; }
-        .brand-logo { height: 42px; width: auto; filter: drop-shadow(0 0 15px rgba(127, 86, 217, 0.4)); transition: transform 0.5s var(--ease); }
+
+        /* --- 修改开始：使用 CSS Mask 固定图标颜色 --- */
+        .brand-logo {
+            width: 42px;
+            height: 42px;
+            /* 设置你想要的图标颜色，这里使用了定义的紫色变量 */
+            background-color: var(--accent-purple);
+
+            /* 使用 Mask 技术 */
+            -webkit-mask: url('icon.png') no-repeat center / contain;
+            mask: url('icon.png') no-repeat center / contain;
+
+            transition: transform 0.5s var(--ease);
+            filter: drop-shadow(0 0 15px rgba(127, 86, 217, 0.4));
+        }
+        /* --- 修改结束 --- */
+
         .brand-header:hover .brand-logo { transform: rotate(10deg) scale(1.1); }
         .brand-title { height: 72px; width: auto; }
 
@@ -242,7 +258,7 @@
 
 <div class="vault-card" id="main-card">
     <div class="brand-header">
-        <img src="icon.png" alt="Logo" class="brand-logo">
+        <div class="brand-logo"></div>
         <img src="title.png" alt="VinuStorage" class="brand-title">
     </div>
 
@@ -505,7 +521,7 @@
     }
 
     checkNetworkStatus();
-    print("VinuStorage Pro v2.0.1 running...");
+    print("VinuStorage Pro v2.0 running...");
 
     async function sha256(buffer) {
         const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
@@ -651,7 +667,7 @@
 
     function resetUI() {
         document.getElementById('pay-box').classList.add('hidden');
-        // FIX: Replaced 'send-form' with 'send-grid-layout'
+        // BUG FIX: 使用正确的 ID
         document.getElementById('send-grid-layout').classList.remove('hidden');
         document.getElementById('qrcode').innerHTML = "";
         const dz = document.getElementById('drop-zone');
@@ -684,7 +700,7 @@
 
         currentDest = dest;
         setProcessingState(true);
-        // FIX: Replaced 'send-form' with 'send-grid-layout'
+        // BUG FIX: 使用正确的 ID
         document.getElementById('send-grid-layout').classList.add('hidden');
         document.getElementById('pay-box').classList.remove('hidden');
 
@@ -738,7 +754,7 @@
                 }
                 if(!isWaitingForPayment) return;
                 document.getElementById('pay-box').classList.add('hidden');
-                // FIX: Replaced 'send-form' with 'send-grid-layout'
+                // BUG FIX: 使用正确的 ID
                 document.getElementById('send-grid-layout').classList.remove('hidden');
             }
 
