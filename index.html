@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VinuStorage Pro | Master Vault</title>
     <link rel="icon" href="icon.png" type="image/png">
-    <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10/dist/jszip.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js" integrity="sha384-Htz1SE4Sl5aitpvFgr2j0sfsGUIuSXI6t8hEyrlQ93zflEF3a29bH2AvkUROUw7J" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10/dist/jszip.min.js" integrity="sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -76,21 +76,17 @@
 
         .brand-header { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 30px; }
 
-        /* --- 修改开始：使用 CSS Mask 固定图标颜色 --- */
         .brand-logo {
             width: 42px;
             height: 42px;
-            /* 设置你想要的图标颜色，这里使用了定义的紫色变量 */
             background-color: var(--accent-purple);
 
-            /* 使用 Mask 技术 */
             -webkit-mask: url('icon.png') no-repeat center / contain;
             mask: url('icon.png') no-repeat center / contain;
 
             transition: transform 0.5s var(--ease);
             filter: drop-shadow(0 0 15px rgba(127, 86, 217, 0.4));
         }
-        /* --- 修改结束 --- */
 
         .brand-header:hover .brand-logo { transform: rotate(10deg) scale(1.1); }
         .brand-title { height: 72px; width: auto; }
@@ -185,7 +181,6 @@
         }
         .addr-display:hover { border-color: var(--accent-purple); color: #fff; background: #151515; }
 
-        /* --- 控制台打字机样式 --- */
         .console {
             margin-top: 25px; background: rgba(0,0,0,0.6); border-radius: var(--radius-md);
             padding: 20px; font-family: 'Fira Code', monospace; font-size: 11px; color: var(--accent-stake);
@@ -196,9 +191,8 @@
 
         .log-line { margin-bottom: 2px; }
 
-        /* 光标闪烁动画 */
         .typing-cursor::after {
-            content: '▋';
+            content: '|';
             display: inline-block;
             animation: blink 1s step-start infinite;
             color: var(--accent-stake);
@@ -290,25 +284,25 @@
 
                         <div class="collapsible" id="pk-input-wrap">
                             <div class="input-wrapper">
-                                <input type="password" id="custom-pk" placeholder="Private Key (0x...)" autocomplete="off">
+                                <input type="password" id="custom-pk" placeholder="Private Key (0x...)" autocomplete="off" spellcheck="false">
                             </div>
                         </div>
 
-                        <div class="checkbox-wrapper" onclick="toggleEncrypt()">
+                        <div class="checkbox-wrapper" onclick="toggleEncrypt(event)">
                             <input type="checkbox" id="chk-encrypt">
                             <span class="checkbox-label">AES-GCM ENCRYPTION</span>
                         </div>
 
                         <div class="collapsible" id="pass-input-wrap">
                             <div class="input-wrapper" style="margin-bottom: 0;">
-                                <input type="password" id="encrypt-pass" placeholder="Encryption Password" autocomplete="off">
+                                <input type="password" id="encrypt-pass" placeholder="Encryption Password" autocomplete="off" spellcheck="false">
                             </div>
                         </div>
                     </div>
 
                     <label>Recipient Address</label>
                     <div class="input-wrapper">
-                        <input type="text" id="target-addr" placeholder="0x..." autocomplete="off">
+                        <input type="text" id="target-addr" placeholder="0x..." autocomplete="off" spellcheck="false">
                         <button class="icon-btn" onclick="pasteAddr('target-addr')"><svg viewBox="0 0 24 24"><path d="M19,2H14.82C14.4,0.84 13.3,0 12,0C10.7,0 9.6,0.84 9.18,2H5C3.9,2 3,2.9 3,4V20C3,21.1 3.9,22 5,22H19C20.1,22 21,21.1 21,20V4C21,2.9 20.1,2 19,2M12,2A1,1 0 0,1 13,3A1,1 0 0,1 12,4A1,1 0 0,1 11,3A1,1 0 0,1 12,2M19,20H5V4H7V7H17V4H19V20Z"/></svg></button>
                     </div>
 
@@ -337,13 +331,13 @@
                 <div>
                     <label>Index Transaction Hash</label>
                     <div class="input-wrapper">
-                        <input type="text" id="idx-hash" placeholder="0x...">
+                        <input type="text" id="idx-hash" placeholder="0x..." spellcheck="false">
                         <button class="icon-btn" onclick="pasteAddr('idx-hash')"><svg viewBox="0 0 24 24"><path d="M19,2H14.82C14.4,0.84 13.3,0 12,0C10.7,0 9.6,0.84 9.18,2H5C3.9,2 3,2.9 3,4V20C3,21.1 3.9,22 5,22H19C20.1,22 21,21.1 21,20V4C21,2.9 20.1,2 19,2M12,2A1,1 0 0,1 13,3A1,1 0 0,1 12,4A1,1 0 0,1 11,3A1,1 0 0,1 12,2M19,20H5V4H7V7H17V4H19V20Z"/></svg></button>
                     </div>
 
                     <label>Decryption Password (Optional)</label>
                     <div class="input-wrapper">
-                        <input type="password" id="decrypt-pass" placeholder="Enter if file is encrypted">
+                        <input type="password" id="decrypt-pass" placeholder="Enter if file is encrypted" spellcheck="false">
                     </div>
 
                     <button class="btn-primary" id="btn-dl" style="background: var(--bg-input); border: 1px solid var(--border-ui);">DECRYPT & RECOVER</button>
@@ -355,7 +349,7 @@
     <div class="console" id="log-console"></div>
 </div>
 
-<div class="footer-copyright">© 2025 VinuStorage Vesflux Twitter: @baanhah</div>
+<div class="footer-copyright">(C) 2025 VinuStorage Vesflux Twitter: @baanhah</div>
 
 <script>
     const NETWORKS = {
@@ -369,6 +363,7 @@
     let isNetworkReady = false;
     let latencyInterval = null;
     let isProcessing = false;
+    let networkCheckId = 0;
 
     let selectedFiles = [];
     let isWaitingForPayment = false;
@@ -378,6 +373,10 @@
 
     const consoleEl = document.getElementById('log-console');
     const BURNER_STORAGE_KEY = 'vinu_burner_key';
+    const CHUNK_SIZE = 120 * 1024;
+    const MAX_HASHES = 1500;
+    const TX_HASH_RE = /^0x[a-fA-F0-9]{64}$/;
+    const FILE_HASH_RE = /^(ENC_GCM_)?[a-fA-F0-9]{64}$/;
 
     // --- TYPEWRITER ENGINE ---
     let typeQueue = [];
@@ -419,12 +418,85 @@
         processTypeQueue();
     }
 
-    function saveBurnerKey(pk) { localStorage.setItem(BURNER_STORAGE_KEY, pk); }
-    function loadBurnerKey() { return localStorage.getItem(BURNER_STORAGE_KEY); }
-    function clearBurnerKey() { localStorage.removeItem(BURNER_STORAGE_KEY); }
+    function saveBurnerKey(pk) {
+        try { sessionStorage.setItem(BURNER_STORAGE_KEY, pk); } catch(e) {}
+    }
+    function loadBurnerKey() {
+        try { return sessionStorage.getItem(BURNER_STORAGE_KEY); } catch(e) { return null; }
+    }
+    function clearBurnerKey() {
+        try { sessionStorage.removeItem(BURNER_STORAGE_KEY); } catch(e) {}
+    }
+
+    function isTxHash(value) {
+        return typeof value === 'string' && TX_HASH_RE.test(value);
+    }
+
+    function validateTxHashArray(values, label) {
+        if (!Array.isArray(values) || values.length === 0) throw new Error(`${label} list is empty.`);
+        values.forEach((hash, idx) => {
+            if (!isTxHash(hash)) throw new Error(`Invalid ${label} hash at position ${idx + 1}.`);
+        });
+        return values;
+    }
+
+    function parseTxHashList(payload, label) {
+        let parsed;
+        try { parsed = JSON.parse(payload); } catch(e) { throw new Error(`Invalid ${label} JSON.`); }
+        return validateTxHashArray(parsed, label);
+    }
+
+    function parseIndexPayload(raw) {
+        const parts = raw.split("::");
+        if (parts.length < 5 || parts[0] !== "V5" || parts[1] !== "VinuStorage_File") {
+            throw new Error("Protocol Mismatch (V5 required).");
+        }
+        const fileHash = parts[2];
+        const mode = parts[3];
+        const payloadStr = parts.slice(4).join("::");
+        if (!FILE_HASH_RE.test(fileHash)) throw new Error("Invalid file hash in index.");
+        if (mode === "V5_DIRECT") {
+            return { fileHash, mode, chunkHashes: parseTxHashList(payloadStr, "chunk") };
+        }
+        if (mode === "V5_MULTIPART") {
+            return { fileHash, mode, pageHashes: parseTxHashList(payloadStr, "index page") };
+        }
+        throw new Error(`Unsupported index mode: ${mode}`);
+    }
+
+    function getTxData(tx, label) {
+        if (!tx || !tx.data || tx.data === "0x") throw new Error(`${label} not found or empty.`);
+        return tx.data;
+    }
+
+    function extractChunkBytes(tx, expectedIndex) {
+        const raw = ethers.utils.arrayify(getTxData(tx, `Chunk ${expectedIndex + 1}`));
+        if (raw.length <= 4) throw new Error(`Chunk ${expectedIndex + 1} payload is empty.`);
+        const seq = new DataView(raw.slice(0, 4).buffer).getUint32(0, false);
+        if (seq !== expectedIndex + 1) throw new Error(`Chunk order mismatch at ${expectedIndex + 1}.`);
+        return raw.slice(4);
+    }
+
+    async function getRequiredGasPrice() {
+        const feeData = await mainProvider.getFeeData();
+        if (!feeData || !feeData.gasPrice) throw new Error("Gas price unavailable.");
+        return feeData.gasPrice;
+    }
+
+    function estimateUploadCost(chunkCount, isMultipart, gasPrice) {
+        let indexGas = ethers.BigNumber.from(300000);
+        if (isMultipart) indexGas = indexGas.add(ethers.BigNumber.from(Math.ceil(chunkCount / MAX_HASHES) * 300000));
+        const chunkGas = ethers.BigNumber.from(2300000).mul(chunkCount);
+        return chunkGas.add(indexGas).mul(gasPrice).mul(130).div(100);
+    }
 
     async function checkNetworkStatus() {
+        const requestId = ++networkCheckId;
         if(latencyInterval) clearInterval(latencyInterval);
+        latencyInterval = null;
+        activeProviders = [];
+        mainProvider = null;
+        isNetworkReady = false;
         const netConfig = NETWORKS[currentNetwork];
         print(`Connecting to ${netConfig.name}...`);
 
@@ -446,6 +518,7 @@
         });
 
         const results = await Promise.all(checks);
+        if (requestId !== networkCheckId) return;
         const valid = results.filter(r => r !== null);
         valid.sort((a, b) => a.latency - b.latency);
         activeProviders = valid.map(r => r.provider);
@@ -628,10 +701,10 @@
         setTimeout(() => updateWrapperHeight(), 350);
     }
 
-    function toggleEncrypt() {
+    function toggleEncrypt(ev) {
         if(isProcessing) return;
         const chk = document.getElementById('chk-encrypt'); const passWrap = document.getElementById('pass-input-wrap');
-        if(!event.target.matches('input')) chk.checked = !chk.checked;
+        if(!ev || !ev.target.matches('input')) chk.checked = !chk.checked;
         if(chk.checked) passWrap.classList.add('open'); else passWrap.classList.remove('open');
         setTimeout(() => updateWrapperHeight(), 350);
     }
@@ -667,9 +740,13 @@
 
     function resetUI() {
         document.getElementById('pay-box').classList.add('hidden');
-        // BUG FIX: 使用正确的 ID
         document.getElementById('send-grid-layout').classList.remove('hidden');
         document.getElementById('qrcode').innerHTML = "";
+        selectedFiles = [];
+        fileInput.value = "";
+        document.getElementById('file-status').innerText = "";
+        document.getElementById('custom-pk').value = "";
+        document.getElementById('encrypt-pass').value = "";
         const dz = document.getElementById('drop-zone');
         dz.classList.remove('uploading'); dz.style.setProperty('--progress', '0%');
         dz.querySelector('i').innerText = '[+]';
@@ -677,13 +754,17 @@
     }
 
     async function copyToClipboard(el) {
-        await navigator.clipboard.writeText(el.innerText);
-        const old = el.innerText; el.innerText = "COPIED"; setTimeout(() => el.innerText = old, 1200);
+        try {
+            await navigator.clipboard.writeText(el.innerText);
+            const old = el.innerText; el.innerText = "COPIED"; setTimeout(() => el.innerText = old, 1200);
+        } catch(e) { print("[!] Clipboard unavailable.", true); }
     }
 
     async function pasteAddr(id) {
         if(isProcessing) return;
-        document.getElementById(id).value = await navigator.clipboard.readText();
+        try {
+            document.getElementById(id).value = await navigator.clipboard.readText();
+        } catch(e) { print("[!] Clipboard unavailable.", true); }
     }
 
     document.getElementById('btn-up').onclick = async () => {
@@ -700,7 +781,6 @@
 
         currentDest = dest;
         setProcessingState(true);
-        // BUG FIX: 使用正确的 ID
         document.getElementById('send-grid-layout').classList.add('hidden');
         document.getElementById('pay-box').classList.remove('hidden');
 
@@ -718,27 +798,26 @@
             }
 
             const chunks = [];
-            const CHUNK_SIZE = 120 * 1024;
             for(let i=0; i<finalData.length; i+=CHUNK_SIZE) chunks.push(finalData.slice(i, i+CHUNK_SIZE));
 
-            const MAX_HASHES = 1500;
             const isMultipart = chunks.length > MAX_HASHES;
+            const gasPrice = await getRequiredGasPrice();
 
             if(uploadMode === 'custom') {
                 try {
                     currentWallet = new ethers.Wallet(customPK, mainProvider);
                     print(`Auth: ${currentWallet.address.slice(0,8)}...`);
+                    document.getElementById('custom-pk').value = "";
                 } catch(e) { throw new Error("Invalid Key"); }
+                const estimatedWei = estimateUploadCost(chunks.length, isMultipart, gasPrice);
+                const balance = await mainProvider.getBalance(currentWallet.address);
+                if (balance.lt(estimatedWei)) throw new Error(`Insufficient balance. Need about ${ethers.utils.formatEther(estimatedWei)} VC.`);
             } else {
                 currentWallet = ethers.Wallet.createRandom().connect(mainProvider);
                 saveBurnerKey(currentWallet.privateKey);
 
-                const feeData = await mainProvider.getFeeData();
-                const safeGasPrice = feeData.gasPrice.mul(120).div(100);
-                const chunkGas = ethers.BigNumber.from(2300000);
-                let indexCost = 300000;
-                if(isMultipart) indexCost += (Math.ceil(chunks.length / MAX_HASHES) * 300000);
-                const totalWei = chunkGas.mul(chunks.length).add(indexCost).mul(safeGasPrice).mul(130).div(100);
+                const safeGasPrice = gasPrice.mul(120).div(100);
+                const totalWei = estimateUploadCost(chunks.length, isMultipart, safeGasPrice);
                 const roundedEther = (Math.ceil(parseFloat(ethers.utils.formatEther(totalWei)) * 10000) / 10000).toFixed(4);
 
                 document.getElementById('temp-addr').innerText = currentWallet.address;
@@ -754,7 +833,6 @@
                 }
                 if(!isWaitingForPayment) return;
                 document.getElementById('pay-box').classList.add('hidden');
-                // BUG FIX: 使用正确的 ID
                 document.getElementById('send-grid-layout').classList.remove('hidden');
             }
 
@@ -765,18 +843,18 @@
             const concurrency = Math.max(activeProviders.length * 6, 6);
             print(`Concurrent Level: ${concurrency}`);
 
-            let currentNonce = await currentWallet.getTransactionCount();
+            let currentNonce = await currentWallet.getTransactionCount("pending");
             const chunkHashes = new Array(chunks.length);
 
             const tasks = chunks.map((chunk, index) => async () => {
-                const freshFee = await mainProvider.getFeeData();
+                const freshGasPrice = await getRequiredGasPrice();
                 const head = new Uint8Array(4);
                 new DataView(head.buffer).setUint32(0, index+1, false);
                 const payload = ethers.utils.hexlify(ethers.utils.concat([head, chunk]));
 
                 const tx = await currentWallet.sendTransaction({
                     to: currentWallet.address, data: payload, nonce: currentNonce + index,
-                    gasLimit: 2300000, gasPrice: freshFee.gasPrice
+                    gasLimit: 2300000, gasPrice: freshGasPrice
                 });
 
                 chunkHashes[index] = tx.hash;
@@ -791,7 +869,7 @@
 
             let finalPayload = "";
             let modeTag = "V5_DIRECT";
-            const freshFeeIdx = await mainProvider.getFeeData();
+            const indexGasPrice = await getRequiredGasPrice();
 
             if (isMultipart) {
                 print("Multipart Indexing...");
@@ -805,7 +883,7 @@
                         data: ethers.utils.hexlify(ethers.utils.toUtf8Bytes(pageStr)),
                         nonce: currentNonce++,
                         gasLimit: 500000,
-                        gasPrice: freshFeeIdx.gasPrice
+                        gasPrice: indexGasPrice
                     });
                     await pageTx.wait();
                     pageHashes.push(pageTx.hash);
@@ -818,7 +896,7 @@
             print("Finalizing...");
             const idxTx = await currentWallet.sendTransaction({
                 to: dest, data: ethers.utils.toUtf8Bytes(idxStr), nonce: currentNonce++,
-                gasLimit: 500000 + (finalPayload.length * 20), gasPrice: freshFeeIdx.gasPrice
+                gasLimit: 500000 + (finalPayload.length * 20), gasPrice: indexGasPrice
             });
 
             dropZone.classList.remove('uploading');
@@ -844,32 +922,32 @@
         const pass = document.getElementById('decrypt-pass').value.trim();
         const btn = document.getElementById('btn-dl');
         if(!hash) return;
+        if(!isTxHash(hash)) return alert("Invalid transaction hash.");
         setProcessingState(true);
         btn.innerText = "SEARCHING...";
 
         try {
             print("Reading Index...");
             const tx = await mainProvider.getTransaction(hash);
-            const raw = ethers.utils.toUtf8String(tx.data);
-            if (!raw.startsWith("V5::")) throw new Error("Protocol Mismatch (V5 required).");
-
-            const parts = raw.split("::");
-            const fileHash = parts[2];
-            const mode = parts[3];
-            const payloadStr = parts.slice(4).join("::");
+            const raw = ethers.utils.toUtf8String(getTxData(tx, "Index transaction"));
+            const index = parseIndexPayload(raw);
+            const fileHash = index.fileHash;
+            const mode = index.mode;
             let chunkHashes = [];
             const concurrency = Math.max(activeProviders.length * 6, 6);
 
             if (mode === "V5_DIRECT") {
-                chunkHashes = JSON.parse(payloadStr);
+                chunkHashes = index.chunkHashes;
                 print(`Direct Mode: ${chunkHashes.length} chunks.`);
             } else if (mode === "V5_MULTIPART") {
                 print("Multipart Mode. Fetching Pages...");
-                const pageHashes = JSON.parse(payloadStr);
-                const pageTasks = pageHashes.map((pHash, idx) => async () => {
+                const pageTasks = index.pageHashes.map((pHash, idx) => async () => {
                     const p = activeProviders[idx % activeProviders.length];
                     const pTx = await p.getTransaction(pHash);
-                    return JSON.parse(ethers.utils.toUtf8String(pTx.data));
+                    const pageRaw = ethers.utils.toUtf8String(getTxData(pTx, `Index page ${idx + 1}`));
+                    let page;
+                    try { page = JSON.parse(pageRaw); } catch(e) { throw new Error(`Invalid chunk page ${idx + 1} JSON.`); }
+                    return validateTxHashArray(page, `chunk page ${idx + 1}`);
                 });
                 const pages = await runConcurrent(pageTasks, concurrency);
                 chunkHashes = pages.flat();
@@ -881,7 +959,7 @@
             const dlTasks = chunkHashes.map((cHash, idx) => async () => {
                 const p = activeProviders[idx % activeProviders.length];
                 const t = await p.getTransaction(cHash);
-                chunksData[idx] = ethers.utils.arrayify(t.data).slice(4);
+                chunksData[idx] = extractChunkBytes(t, idx);
                 completed++;
                 const pct = Math.floor((completed / chunkHashes.length) * 100);
                 btn.innerText = `DOWNLOADING ${pct}%`;

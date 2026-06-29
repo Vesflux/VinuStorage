@@ -16,7 +16,7 @@ The result is a recoverable, on-chain file snapshot identified by a single index
 - **Custom key mode** - upload directly with your own private key when preferred.
 - **Mainnet / testnet switch** - click the network widget to toggle between VinuChain mainnet and testnet RPCs.
 - **Large archive support** - multipart index pages are used when the chunk list is too large for one index transaction.
-- **Legacy Python CLI** - `send.py` and `rec.py` preserve the earlier testnet command-line workflow.
+- **Hardened recovery checks** - validates index format, transaction hashes, chunk order, and archive integrity before download.
 
 ## How It Works
 
@@ -98,8 +98,9 @@ The default network is mainnet. Click the network badge in the bottom-right corn
 - VinuStorage stores data in public blockchain transaction calldata. Use encryption for anything private.
 - If you lose the encryption password, encrypted archives cannot be recovered.
 - If you lose the index transaction hash, recovery becomes difficult because the chunk order is stored there.
-- Burner wallet private keys are temporarily stored in browser `localStorage` so interrupted sessions can be detected. Clear browser storage if you want to remove them manually.
+- Burner wallet private keys are temporarily stored in browser `sessionStorage` so interrupted uploads can be detected within the current tab session. Closing the tab clears them.
 - Custom key mode requires pasting a private key into the browser. Only use it in an environment you trust.
+- CDN scripts are pinned with Subresource Integrity checks so modified third-party assets are blocked by the browser.
 - Uploaded data may be permanent or very hard to remove once transactions are confirmed.
 
 ## Cost Notes
@@ -108,37 +109,6 @@ Every chunk is an on-chain transaction, so upload cost grows with file size. The
 
 For smaller, cheaper uploads, compress files before sending or upload only the minimum data you need to preserve.
 
-## Legacy Python CLI
-
-The repository also contains an older testnet-oriented Python workflow:
-
-- `send.py` zips the local `file/` directory, splits it into chunks, uploads chunks to VinuChain testnet, and emits an index transaction.
-- `rec.py` reads an index transaction, fetches chunk transactions through the testnet explorer API, reassembles the ZIP, checks SHA-256, and extracts to `out/`.
-
-Install dependencies:
-
-```bash
-pip install web3 requests qrcode
-```
-
-Expected layout:
-
-```text
-VinuStorage/
-  file/        # files to upload with send.py
-  send.py
-  rec.py
-```
-
-Run:
-
-```bash
-python send.py
-python rec.py
-```
-
-The web app is the recommended interface for current use.
-
 ## Repository Structure
 
 ```text
@@ -146,8 +116,6 @@ The web app is the recommended interface for current use.
 |-- index.html   # VinuStorage Pro web app
 |-- icon.png     # app icon
 |-- title.png    # title image used by the UI
-|-- send.py      # legacy testnet sender
-|-- rec.py       # legacy testnet receiver
 |-- LICENSE      # GPL-3.0 license
 `-- README.md
 ```
